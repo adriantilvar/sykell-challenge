@@ -1,22 +1,29 @@
-type UrlInfo = {
-  id: string;
-  htmlVersion: string;
-  pageTitle: string;
-  h1Count: number;
-  h2Count: number;
-  h3Count: number;
-  h4Count: number;
-  internalLinksCount: number;
-  externalLinksCount: number;
-  brokenLinksCount: number;
-  hasLoginForm: boolean;
-};
+import { z } from "zod";
+import { safeTry } from "@/lib/utils";
+
+const UrlInfoSchema = z.object({
+  htmlVersion: z.string(),
+  pageTitle: z.string(),
+  h1Count: z.number(),
+  h2Count: z.number(),
+  h3Count: z.number(),
+  h4Count: z.number(),
+  internalLinksCount: z.number(),
+  externalLinksCount: z.number(),
+  brokenLinksCount: z.number(),
+  hasLoginForm: z.boolean(),
+});
 
 export default async function Home() {
-  // TODO: Validate response
-  const urls = await fetch("http://127.0.0.1:1534/urls", {
-    cache: "no-store",
-  }).then((res) => res.json());
+  const baseUrl = "https://www.w3.org/TR/html401/sgml/dtd.html";
+
+  const [fetchError, urlInfo] = await safeTry(
+    fetch(`http://127.0.0.1:1534/url-info?url=${baseUrl}`, {
+      cache: "no-store",
+    }).then((res) => res.json())
+  );
+
+  const { error: parseError, data } = UrlInfoSchema.safeParse(urlInfo);
 
   return (
     <main className="flex h-full flex-col items-center justify-center">
@@ -24,11 +31,25 @@ export default async function Home() {
         Page under construction
       </h1>
 
-      <ul>
-        {urls.map((url: UrlInfo) => (
-          <li key={url.id}>{url.pageTitle}</li>
-        ))}
-      </ul>
+      {fetchError && <p>Oops, something went wrong retrieving the data</p>}
+      {!fetchError && parseError && (
+        <p>Oops, something went wrong parsing the data</p>
+      )}
+      {!parseError && !fetchError && (
+        <div className="pt-2">
+          <h2 className="font-medium">URL: {baseUrl}</h2>
+          <p>HTML version: {data.htmlVersion} </p>
+          <p>Title: {data.pageTitle}</p>
+          <p>H1 count: {data.h1Count}</p>
+          <p>H2 count: {data.h2Count}</p>
+          <p>H3 count: {data.h3Count}</p>
+          <p>H4 count: {data.h4Count}</p>
+          <p>Internal links count: {data.internalLinksCount}</p>
+          <p>External links count: {data.externalLinksCount}</p>
+          <p>Broken links count: {data.brokenLinksCount}</p>
+          <p>Has login form: {data.hasLoginForm ? "Yes" : "No"}</p>
+        </div>
+      )}
     </main>
   );
 }
