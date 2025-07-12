@@ -1,15 +1,17 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export const safeTry = async <T, E = Error>(
   promise: Promise<T>
-): Promise<[null, T] | [E, null]> => {
+): Promise<[T, null] | [null, E]> => {
   try {
     const result = await promise;
-    return [null, result];
+    return [result, null];
   } catch (e: unknown) {
-    return [e as E, null];
+    return [null, e as E];
   }
 };

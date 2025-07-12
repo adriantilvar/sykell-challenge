@@ -3,7 +3,6 @@ package crawler
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -42,7 +41,6 @@ func CrawlPage(baseUrl string) (*urlInfo, error) {
 
 	doc, parseError := html.Parse(res.Body)
 	if parseError != nil {
-		log.Fatalf("could not parse HTML body")
 		return nil, errors.New("could not parse HTML body")
 	}
 
