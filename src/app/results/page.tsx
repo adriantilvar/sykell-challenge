@@ -14,7 +14,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 5,
       externalLinksCount: 3,
-      brokenLinksCount: 1,
+      brokenLinks: [{ url: "https://example.com/broken1", statusCode: 404 }],
       hasLoginForm: false,
     },
     {
@@ -27,7 +27,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 10,
       externalLinksCount: 4,
-      brokenLinksCount: 0,
+      brokenLinks: [],
       hasLoginForm: true,
     },
     {
@@ -40,7 +40,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 8,
       externalLinksCount: 2,
-      brokenLinksCount: 0,
+      brokenLinks: [],
       hasLoginForm: false,
     },
     {
@@ -53,7 +53,10 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 1,
       internalLinksCount: 6,
       externalLinksCount: 1,
-      brokenLinksCount: 2,
+      brokenLinks: [
+        { url: "https://demo.com/broken1", statusCode: 404 },
+        { url: "https://demo.com/broken2", statusCode: 500 },
+      ],
       hasLoginForm: true,
     },
     {
@@ -66,7 +69,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 12,
       externalLinksCount: 5,
-      brokenLinksCount: 0,
+      brokenLinks: [],
       hasLoginForm: false,
     },
     {
@@ -79,7 +82,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 7,
       externalLinksCount: 3,
-      brokenLinksCount: 1,
+      brokenLinks: [{ url: "https://blog.com/broken1", statusCode: 404 }],
       hasLoginForm: false,
     },
     {
@@ -92,7 +95,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 3,
       externalLinksCount: 2,
-      brokenLinksCount: 0,
+      brokenLinks: [],
       hasLoginForm: true,
     },
     {
@@ -105,7 +108,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 1,
       internalLinksCount: 9,
       externalLinksCount: 4,
-      brokenLinksCount: 1,
+      brokenLinks: [{ url: "https://services.com/broken1", statusCode: 404 }],
       hasLoginForm: false,
     },
     {
@@ -118,7 +121,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 5,
       externalLinksCount: 1,
-      brokenLinksCount: 0,
+      brokenLinks: [],
       hasLoginForm: false,
     },
     {
@@ -131,7 +134,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 4,
       externalLinksCount: 2,
-      brokenLinksCount: 1,
+      brokenLinks: [{ url: "https://faq.com/broken1", statusCode: 404 }],
       hasLoginForm: false,
     },
     {
@@ -144,7 +147,7 @@ async function getData(): Promise<UrlInfo[]> {
       h4Count: 0,
       internalLinksCount: 6,
       externalLinksCount: 3,
-      brokenLinksCount: 0,
+      brokenLinks: [],
       hasLoginForm: true,
     },
   ];
@@ -153,6 +156,11 @@ async function getData(): Promise<UrlInfo[]> {
 export default async function ResultsPage() {
   const data = await getData();
 
+  const mappedData = data.map(({ brokenLinks, ...rest }) => ({
+    ...rest,
+    brokenLinksCount: brokenLinks.length,
+  }));
+
   return (
     <main className="container mx-auto px-3">
       <div className="mt-16 sm:mt-32">
@@ -160,7 +168,11 @@ export default async function ResultsPage() {
           <h1 className="font-medium text-xl">Results</h1>
           <p>The results for the successful analyses</p>
         </div>
-        <DataTable columns={columns} data={data} className="mt-2 max-w-300" />
+        <DataTable
+          columns={columns}
+          data={mappedData}
+          className="mt-2 max-w-300"
+        />
       </div>
     </main>
   );

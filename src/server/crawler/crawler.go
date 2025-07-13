@@ -13,18 +13,23 @@ import (
 	"golang.org/x/net/html"
 )
 
+type linkInfo struct {
+	Url        string `json:"url"`
+	StatusCode int    `json:"statusCode"`
+}
+
 type urlInfo struct {
-	BaseUrl            string `json:"baseUrl"`
-	HtmlVersion        string `json:"htmlVersion"`
-	Title              string `json:"pageTitle"`
-	H1Count            int    `json:"h1Count"`
-	H2Count            int    `json:"h2Count"`
-	H3Count            int    `json:"h3Count"`
-	H4Count            int    `json:"h4Count"`
-	InternalLinksCount int    `json:"internalLinksCount"`
-	ExternalLinksCount int    `json:"externalLinksCount"`
-	BrokenLinksCount   int    `json:"brokenLinksCount"`
-	HasLoginForm       bool   `json:"hasLoginForm"`
+	BaseUrl            string     `json:"baseUrl"`
+	HtmlVersion        string     `json:"htmlVersion"`
+	Title              string     `json:"pageTitle"`
+	H1Count            int        `json:"h1Count"`
+	H2Count            int        `json:"h2Count"`
+	H3Count            int        `json:"h3Count"`
+	H4Count            int        `json:"h4Count"`
+	InternalLinksCount int        `json:"internalLinksCount"`
+	ExternalLinksCount int        `json:"externalLinksCount"`
+	BrokenLinks        []linkInfo `json:"brokenLinks"`
+	HasLoginForm       bool       `json:"hasLoginForm"`
 }
 
 var IGNORED_TAGS = []string{"script", "link", "meta"}
@@ -62,7 +67,7 @@ func CrawlPage(baseUrl string) (*urlInfo, error) {
 		H4Count:            len(headings["h4"]),
 		InternalLinksCount: len(links["internal"]),
 		ExternalLinksCount: len(links["external"]),
-		BrokenLinksCount:   len(links["inaccessible"]),
+		BrokenLinks:        links["inaccessible"],
 		HasLoginForm:       hasLogin,
 	}, nil
 }
@@ -121,22 +126,25 @@ func getAllTags(pattern string, node *html.Node, result map[string][]*html.Node)
 	}
 }
 
-func getLinks(root *html.Node, baseUrl string) map[string][]string {
+func getLinks(root *html.Node, baseUrl string) map[string][]linkInfo {
 	links := make(map[string][]*html.Node)
 	getAllTags("^a$", root, links)
 
-	categorizedLinks := make(map[string][]string)
+	categorizedLinks := make(map[string][]linkInfo)
 
 	for _, node := range links["a"] {
 		href := getAttribute("href", node)
-		if isLinkExternal(href, baseUrl) {
-			categorizedLinks["external"] = append(categorizedLinks["external"], href)
 
-			if isLinkBroken(href) {
-				categorizedLinks["inaccessible"] = append(categorizedLinks["inaccessible"], href)
+		if isLinkExternal(href, baseUrl) {
+			isBroken, statusCode := isLinkBroken(href)
+
+			categorizedLinks["external"] = append(categorizedLinks["external"], linkInfo{Url: href, StatusCode: statusCode})
+
+			if isBroken {
+				categorizedLinks["inaccessible"] = append(categorizedLinks["inaccessible"], linkInfo{Url: href, StatusCode: statusCode})
 			}
 		} else {
-			categorizedLinks["internal"] = append(categorizedLinks["internal"], href)
+			categorizedLinks["internal"] = append(categorizedLinks["internal"], linkInfo{Url: href, StatusCode: -1})
 		}
 	}
 
@@ -164,7 +172,7 @@ func isLinkExternal(link string, baseUrl string) bool {
 		!strings.HasPrefix(link, domain)
 }
 
-func isLinkBroken(link string) bool {
+func isLinkBroken(link string) (bool, int) {
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
 		panic(err)
@@ -181,7 +189,7 @@ func isLinkBroken(link string) bool {
 
 	status := strconv.Itoa(res.StatusCode)
 
-	return strings.HasPrefix(status, "4") || strings.HasPrefix(status, "5")
+	return strings.HasPrefix(status, "4") || strings.HasPrefix(status, "5"), res.StatusCode
 }
 
 func containsLogin(root *html.Node) bool {

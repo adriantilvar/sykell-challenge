@@ -10,7 +10,12 @@ export const UrlInfoSchema = z.object({
   h4Count: z.number(),
   internalLinksCount: z.number(),
   externalLinksCount: z.number(),
-  brokenLinksCount: z.number(),
+  brokenLinks: z.array(
+    z.object({
+      url: z.string(),
+      statusCode: z.int(),
+    })
+  ),
   hasLoginForm: z.boolean(),
 });
 

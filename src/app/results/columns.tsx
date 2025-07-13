@@ -6,11 +6,29 @@ import { Button } from "@/components/ui/button.tsx";
 import type { UrlInfo } from "@/lib/schemas.ts";
 import { cn } from "@/lib/utils.ts";
 
+type ColumnType = Omit<UrlInfo, "brokenLinks"> & {
+  brokenLinksCount: number;
+};
+
+export const columnHeaders: Record<keyof ColumnType, string> = {
+  baseUrl: "URL",
+  htmlVersion: "HTML Version",
+  pageTitle: "Page Title",
+  h1Count: "# H1",
+  h2Count: "# H2",
+  h3Count: "# H3",
+  h4Count: "# H4",
+  internalLinksCount: "# Internal Links",
+  externalLinksCount: "# External Links",
+  brokenLinksCount: "# Broken Links",
+  hasLoginForm: "Login Required",
+} as const;
+
 function getSortableHeader({
   context,
   body,
 }: {
-  context: HeaderContext<UrlInfo, unknown>;
+  context: HeaderContext<ColumnType, unknown>;
   body: string;
 }) {
   const isAscendingOrder = context.column.getIsSorted() === "asc";
@@ -33,25 +51,11 @@ function getSortableHeader({
   );
 }
 
-function getFormattedCell(cell: Cell<UrlInfo, unknown>) {
+function getFormattedCell(cell: Cell<ColumnType, unknown>) {
   return <div className="pl-2.5">{String(cell.getValue())}</div>;
 }
 
-export const columnHeaders = {
-  baseUrl: "URL",
-  htmlVersion: "HTML Version",
-  pageTitle: "Page Title",
-  h1Count: "# H1",
-  h2Count: "# H2",
-  h3Count: "# H3",
-  h4Count: "# H4",
-  internalLinksCount: "# Internal Links",
-  externalLinksCount: "# External Links",
-  brokenLinksCount: "# Broken Links",
-  hasLoginForm: "Login Required",
-} as const;
-
-export const columns: ColumnDef<UrlInfo>[] = [
+export const columns: ColumnDef<ColumnType>[] = [
   {
     accessorKey: "baseUrl",
     header: columnHeaders.baseUrl,
