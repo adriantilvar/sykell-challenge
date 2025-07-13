@@ -156,11 +156,6 @@ async function getData(): Promise<UrlInfo[]> {
 export default async function ResultsPage() {
   const data = await getData();
 
-  const mappedData = data.map(({ brokenLinks, ...rest }) => ({
-    ...rest,
-    brokenLinksCount: brokenLinks.length,
-  }));
-
   return (
     <main className="container mx-auto px-3">
       <div className="mt-16 sm:mt-32">
@@ -168,11 +163,7 @@ export default async function ResultsPage() {
           <h1 className="font-medium text-xl">Results</h1>
           <p>The results for the successful analyses</p>
         </div>
-        <DataTable
-          columns={columns}
-          data={mappedData}
-          className="mt-2 max-w-300"
-        />
+        <DataTable columns={columns} data={data} className="mt-2 max-w-300" />
       </div>
     </main>
   );

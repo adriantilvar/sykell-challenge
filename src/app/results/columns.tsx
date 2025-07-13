@@ -6,11 +6,7 @@ import { Button } from "@/components/ui/button.tsx";
 import type { UrlInfo } from "@/lib/schemas.ts";
 import { cn } from "@/lib/utils.ts";
 
-type ColumnType = Omit<UrlInfo, "brokenLinks"> & {
-  brokenLinksCount: number;
-};
-
-export const columnHeaders: Record<keyof ColumnType, string> = {
+export const columnHeaders: Record<keyof UrlInfo, string> = {
   baseUrl: "URL",
   htmlVersion: "HTML Version",
   pageTitle: "Page Title",
@@ -20,7 +16,7 @@ export const columnHeaders: Record<keyof ColumnType, string> = {
   h4Count: "# H4",
   internalLinksCount: "# Internal Links",
   externalLinksCount: "# External Links",
-  brokenLinksCount: "# Broken Links",
+  brokenLinks: "# Broken Links",
   hasLoginForm: "Login Required",
 } as const;
 
@@ -28,7 +24,7 @@ function getSortableHeader({
   context,
   body,
 }: {
-  context: HeaderContext<ColumnType, unknown>;
+  context: HeaderContext<UrlInfo, unknown>;
   body: string;
 }) {
   const isAscendingOrder = context.column.getIsSorted() === "asc";
@@ -51,11 +47,11 @@ function getSortableHeader({
   );
 }
 
-function getFormattedCell(cell: Cell<ColumnType, unknown>) {
+function getFormattedCell(cell: Cell<UrlInfo, unknown>) {
   return <div className="pl-2.5">{String(cell.getValue())}</div>;
 }
 
-export const columns: ColumnDef<ColumnType>[] = [
+export const columns: ColumnDef<UrlInfo>[] = [
   {
     accessorKey: "baseUrl",
     header: columnHeaders.baseUrl,
@@ -115,17 +111,30 @@ export const columns: ColumnDef<ColumnType>[] = [
     filterFn: "numerical",
   },
   {
-    accessorKey: "brokenLinksCount",
+    accessorKey: "brokenLinks",
     header: (context) =>
-      getSortableHeader({ context, body: columnHeaders.brokenLinksCount }),
-    cell: ({ cell }) => getFormattedCell(cell),
-    filterFn: "numerical",
+      getSortableHeader({ context, body: columnHeaders.brokenLinks }),
+    cell: ({ cell }) => (
+      <div className="pl-2.5">
+        {String((cell.getValue() as UrlInfo["brokenLinks"]).length)}
+      </div>
+    ),
+    filterFn: (row, _, filterValue) => {
+      const numericalValue = Number(filterValue);
+      const linkCount = row.getValue(
+        "brokenLinks"
+      ) satisfies UrlInfo["brokenLinks"];
+
+      if (Number.isNaN(numericalValue)) return false;
+
+      return linkCount.length === numericalValue;
+    },
   },
   {
     accessorKey: "hasLoginForm",
     header: (context) =>
       getSortableHeader({ context, body: columnHeaders.hasLoginForm }),
-    cell: ({ cell }) => (
+    cell: (cell) => (
       <div className="pl-3">{cell.getValue() ? "Yes" : "No"}</div>
     ),
   },
