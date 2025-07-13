@@ -1,6 +1,7 @@
 import z from "zod";
 
 export const UrlInfoSchema = z.object({
+  baseUrl: z.string(),
   htmlVersion: z.string(),
   pageTitle: z.string(),
   h1Count: z.number(),
@@ -12,3 +13,5 @@ export const UrlInfoSchema = z.object({
   brokenLinksCount: z.number(),
   hasLoginForm: z.boolean(),
 });
+
+export type UrlInfo = z.infer<typeof UrlInfoSchema>;

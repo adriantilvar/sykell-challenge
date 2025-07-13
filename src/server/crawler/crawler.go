@@ -14,6 +14,7 @@ import (
 )
 
 type urlInfo struct {
+	BaseUrl            string `json:"baseUrl"`
 	HtmlVersion        string `json:"htmlVersion"`
 	Title              string `json:"pageTitle"`
 	H1Count            int    `json:"h1Count"`
@@ -52,6 +53,7 @@ func CrawlPage(baseUrl string) (*urlInfo, error) {
 	hasLogin := containsLogin(doc)
 
 	return &urlInfo{
+		BaseUrl:            baseUrl,
 		HtmlVersion:        htmlVersion,
 		Title:              title.FirstChild.Data,
 		H1Count:            len(headings["h1"]),

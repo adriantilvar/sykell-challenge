@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
+import NavBar from "./nav-bar.tsx";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
           "h-screen overflow-hidden antialiased"
         )}
       >
+        <NavBar />
         {children}
         <Toaster />
       </body>

@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { UrlInfoSchema } from "@/lib/schemas.ts";
 import { cn, safeTry } from "@/lib/utils";
-import { UrlInfoSchema } from "./schemas.ts";
 
 type UrlQueueItem = {
   url: string;
@@ -161,7 +161,7 @@ export default function Home() {
 
   return (
     <main className="flex h-screen flex-col items-center">
-      <div className="mt-16 flex size-full flex-col overflow-hidden px-3 sm:mt-42 sm:w-xl xl:w-2xl">
+      <div className="mt-16 flex size-full flex-col overflow-hidden px-3 sm:mt-32 sm:w-xl xl:w-2xl">
         <div>
           <h1 className="font-medium text-xl">Analyze URL</h1>
           <p>Add a URL to the queue for analysis</p>
