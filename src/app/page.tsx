@@ -1,11 +1,13 @@
 "use client";
 import { useForm } from "@tanstack/react-form";
-import { Info, OctagonX, Play } from "lucide-react";
+import { Info, ListVideo, OctagonX, Play, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import env from "@/env/client";
 import { UrlInfoSchema } from "@/lib/schemas.ts";
 import { cn, safeTry } from "@/lib/utils";
 
@@ -22,7 +24,7 @@ const FetchError = {
 
 const getUrlInfo = async (url: string, controller?: AbortController) => {
   const [urlInfo, fetchError] = await safeTry<unknown, Error | string>(
-    fetch(`http://127.0.0.1:1534/url-info?url=${url}`, {
+    fetch(`${env.NEXT_PUBLIC_API_BASE_URL}?url=${url}`, {
       cache: "no-store",
       signal: controller?.signal,
     }).then((res) => {
@@ -85,6 +87,8 @@ export default function Home() {
 
   const [isFetching, setIsFetching] = useState(false);
   const fetchController = useRef<AbortController | null>(null);
+
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
   const runningItem = queue.find((item) => item.status === "Running");
   const firstQueuedItem = queue.find((item) => item.status === "Queued");
@@ -212,13 +216,54 @@ export default function Home() {
 
         {!!queue.length && (
           <div className="mt-6 flex h-full flex-col gap-2 overflow-hidden">
-            <h2 className="font-medium text-lg">URLs</h2>
+            <div className="flex h-9 items-center justify-between">
+              <h2 className="font-medium text-lg">URLs</h2>
+
+              {selectedIndices.length > 0 && (
+                <div className="space-x-1">
+                  <Button
+                    size="sm"
+                    className="border-blue-600 bg-blue-200 text-blue-950 hover:bg-blue-300/80"
+                    onClick={() => {
+                      const updatedQueue = queue;
+
+                      selectedIndices.forEach((i) => {
+                        updatedQueue[i] = {
+                          ...updatedQueue[i],
+                          status: "Queued",
+                        };
+                      });
+
+                      setQueue(updatedQueue);
+                      setSelectedIndices([]);
+                    }}
+                  >
+                    <ListVideo /> Run
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="border-red-600 bg-red-200 text-red-900 hover:bg-red-300/80"
+                  >
+                    <Trash2 /> Delete
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <div className="h-full overflow-scroll pb-4">
-              {queue.map((item) => (
+              {queue.map((item, index) => (
                 <QueueItem
                   key={item.url}
                   item={item}
+                  isChecked={selectedIndices.includes(index)}
+                  onChecked={(isChecked) => {
+                    if (isChecked) {
+                      setSelectedIndices((prev) => [...prev, index]);
+                    } else
+                      setSelectedIndices((prev) =>
+                        prev.filter((x) => x !== index)
+                      );
+                  }}
                   run={runAnalysis}
                   stop={stopAnalysis}
                 />
@@ -233,24 +278,33 @@ export default function Home() {
 
 function QueueItem({
   item,
+  isChecked,
+  onChecked,
   run,
   stop,
 }: {
   item: UrlQueueItem;
+  isChecked: boolean;
+  onChecked?: (isChecked: boolean) => void;
   run: (item: UrlQueueItem) => void;
   stop: (item: UrlQueueItem, status: UrlQueueItem["status"]) => void;
 }) {
   return (
     <div
       key={item.url}
-      className="grid grid-cols-10 gap-y-1 border not-first:border-t-0 px-3 py-2 first:rounded-t-sm last:rounded-b-sm"
+      className="grid grid-cols-10 items-center gap-y-1 border not-first:border-t-0 px-3 py-2 first:rounded-t-sm last:rounded-b-sm sm:grid-cols-16"
     >
-      <div className="col-span-10 inline-flex items-center sm:col-span-7">
-        <span className="overflow-hidden truncate font-medium sm:w-90 xl:w-108">
-          {item.url}
-        </span>
+      <Checkbox
+        id={item.url}
+        className="col-start-1 row-start-1"
+        checked={isChecked}
+        onCheckedChange={onChecked}
+      />
+
+      <div className="col-span-9 col-start-2 row-start-1 truncate font-medium sm:col-span-11">
+        {item.url}
       </div>
-      <div className="col-span-3 inline-flex items-center gap-x-1 sm:col-span-2">
+      <div className="col-span-3 row-start-2 inline-flex items-center gap-x-1 sm:col-span-3 sm:row-start-1 sm:justify-self-center">
         <span
           className={cn("size-3 rounded-full", {
             "bg-blue-400": item.status === "Created",
@@ -263,7 +317,8 @@ function QueueItem({
         />
         <span>{item.status}</span>
       </div>
-      <div className="col-span-1 col-start-10 flex justify-center">
+
+      <div className="col-start-10 row-start-2 justify-self-center sm:col-start-16 sm:row-start-1">
         {item.status === "Running" || item.status === "Queued" ? (
           <Button
             size="icon"
